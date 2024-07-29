@@ -1,0 +1,12 @@
+{
+  "name": "postcss-auto-modules",
+  "version": "1.0.0",
+  "main": "index.js",
+  "keywords": ["postcss-modules", "css-modules"],
+  "author": "dylanpiercey",
+  "license": "MIT",
+  "description": "PostCSS modules wrapper that automatically outputs js files for library code.",
+  "dependencies": {
+    "postcss-modules": "^6.0.0"
+  }
+}
