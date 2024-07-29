@@ -5,6 +5,29 @@ const postcssModules = require("postcss-modules");
 module.exports = (opts = {}) => {
   const modules = new Map();
   const globalCSSReg = /(?<!\.module)\.[^.]+$/;
+  const originalPlugin = postcssModules({
+    ...opts,
+    globalModulePaths: [globalCSSReg],
+    getJSON(_, exports, distFile) {
+      if (!isEmpty(exports)) {
+        modules.set(distFile, exports);
+      }
+    },
+  });
+  const facadePlugin = {
+    ...originalPlugin,
+    OnceExit(css, ctx) {
+      if (
+        ctx.result.processor.plugins.some(
+          (plugin) =>
+            plugin !== facadePlugin &&
+            plugin.postcssPlugin === facadePlugin.postcssPlugin,
+        )
+      )
+        return;
+      return originalPlugin.OnceExit(css, ctx);
+    },
+  };
   process.on("beforeExit", () => {
     for (const [file, exports] of modules) {
       const outCSSFile = file.replace(/\.[^.]+$/, ".dist$&");
@@ -18,17 +41,7 @@ module.exports = (opts = {}) => {
   });
   return {
     postcssPlugin: "postcss-auto-modules",
-    plugins: [
-      postcssModules({
-        ...opts,
-        globalModulePaths: [globalCSSReg],
-        getJSON(_, exports, distFile) {
-          if (!isEmpty(exports)) {
-            modules.set(distFile, exports);
-          }
-        },
-      }),
-    ],
+    plugins: [facadePlugin],
   };
 };
 module.exports.postcss = true;
